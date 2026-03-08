@@ -48,13 +48,14 @@
 // MCPWM support for ESP32S3
 #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 #include "driver/mcpwm.h"
-#define MCPWM_NUM_UNITS 2
 #define MCPWM_NUM_TIMERS_PER_UNIT 3
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
+#define MCPWM_NUM_UNITS 2
 #define MCPWM_NUM_OPERATORS_PER_TIMER 2
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
+#define MCPWM_NUM_UNITS 1
 #define MCPWM_NUM_OPERATORS_PER_TIMER 2
 #endif
 
