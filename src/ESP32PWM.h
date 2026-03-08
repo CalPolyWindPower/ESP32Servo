@@ -45,19 +45,17 @@
 #else
 #define NUM_PWM 16
 #endif
-
 // MCPWM support for ESP32S3
 #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 #include "driver/mcpwm.h"
 #define MCPWM_NUM_UNITS 2
 #define MCPWM_NUM_TIMERS_PER_UNIT 3
+#endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
 #define MCPWM_NUM_OPERATORS_PER_TIMER 2
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
 #define MCPWM_NUM_OPERATORS_PER_TIMER 2
-#else
-#error "MCPWM configuration error."
 #endif
 
 
@@ -207,7 +205,7 @@ public:
 		return false;
 	}
 	static int channelsRemaining() {
-#if defined(CONFIG_IDF_TARGET_ESP32S3 || defined(CONFIG_IDF_TARGET_ESP32C5))
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		return NUM_PWM + (MCPWM_NUM_UNITS * MCPWM_NUM_TIMERS_PER_UNIT * MCPWM_NUM_OPERATORS_PER_TIMER) - PWMCount;
 #else
 		return NUM_PWM - PWMCount;
