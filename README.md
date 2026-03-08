@@ -22,7 +22,7 @@ This library provides enhanced PWM control for ESP32 boards, faithfully replicat
 | ESP32S2       | 8             | -              | 8              |
 | ESP32         | 16            | -              | 16             |
 | ESP32C3       | 6             | -              | 6              |
-| ESP32C3       | 6             | 6              | 12              |
+| ESP32C5       | 6             | 6              | 12              |
 
 ## Usage Examples
 
