@@ -15,7 +15,7 @@ ESP32PWM * ESP32PWM::ChannelUsed[NUM_PWM]; // used to track whether a channel is
 long ESP32PWM::timerFreqSet[4] = { -1, -1, -1, -1 };
 int ESP32PWM::timerCount[4] = { 0, 0, 0, 0 };
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 MCPWMTimerInfo ESP32PWM::mcpwmTimers[MCPWM_NUM_UNITS][MCPWM_NUM_TIMERS_PER_UNIT];
 #endif
 
@@ -52,8 +52,10 @@ ESP32PWM::ESP32PWM(bool variableFrequency) : useVariableFrequency(variableFreque
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
 		// MCPWMTimerInfo struct is initialized with default values in the struct definition
 		ESP_LOGI(TAG, "ESP32S3 detected - MCPWM support enabled");
+#else if defined(CONFIG_IDF_TARGET_ESP32C5)
+		ESP_LOGI(TAG, "ESP32C5 detected - MCPWM support enabled");
 #else
-		ESP_LOGI(TAG, "Non-ESP32S3 target - using LEDC only");
+		ESP_LOGI(TAG, "Non-ESP32S3 or -ESP32C5 target - using LEDC only");
 #endif
 		PWMCount = PWM_BASE_INDEX; // 0th channel does not work with the PWM system
 	}
@@ -131,8 +133,8 @@ int ESP32PWM::allocatenext(double freq) {
 					}
 				}
 			}
-			// if no LEDC, try MCPWM (ESP32S3 only)
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+			// if no LEDC, try MCPWM (ESP32S3 or ESP32C5 only)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 			for(int u=0; u<MCPWM_NUM_UNITS; u++) {
 				for(int t=0; t<MCPWM_NUM_TIMERS_PER_UNIT; t++) {
 					if (mcpwmTimers[u][t].operatorCount == 0) {
@@ -154,7 +156,7 @@ int ESP32PWM::allocatenext(double freq) {
 #endif
 		} else {
 			// non-variable, prefer MCPWM with shared freq, fallback to LEDC
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 			for(int u=0; u<MCPWM_NUM_UNITS; u++) {
 				for(int t=0; t<MCPWM_NUM_TIMERS_PER_UNIT; t++) {
 					bool freqMatch = (mcpwmTimers[u][t].freq == freqlocal || mcpwmTimers[u][t].freq == -1);
@@ -211,7 +213,7 @@ int ESP32PWM::allocatenext(double freq) {
 }
 void ESP32PWM::deallocate() {
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		ESP_LOGI(TAG, "PWM deallocating MCPWM unit %d timer %d operator %d", mcpwmUnit, mcpwmTimer, mcpwmOperator);
 		mcpwmTimers[mcpwmUnit][mcpwmTimer].operatorCount--;
 		mcpwmTimers[mcpwmUnit][mcpwmTimer].operators[mcpwmOperator == MCPWM_OPR_A ? 0 : 1] = NULL;
@@ -219,8 +221,8 @@ void ESP32PWM::deallocate() {
 			mcpwmTimers[mcpwmUnit][mcpwmTimer].freq = -1;
 		}
 #else
-		// This should never happen - isMCPWM should only be true on ESP32S3
-		ESP_LOGE(TAG, "ERROR: MCPWM deallocate attempted on non-ESP32S3 target!");
+		// This should never happen - isMCPWM should only be true on ESP32S3 or ESP32C5
+		ESP_LOGE(TAG, "ERROR: MCPWM deallocate attempted on non-ESP32S3 or non-ESP32C5 target!");
 		isMCPWM = false; // Reset to safe state
 #endif
 	} else if (pwmChannel >= 0) {
@@ -240,11 +242,11 @@ void ESP32PWM::deallocate() {
 
 int ESP32PWM::getChannel() {
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		return (mcpwmUnit * 10 + mcpwmTimer * 2 + (mcpwmOperator == MCPWM_OPR_A ? 0 : 1)) + 100; // offset to avoid conflict
 #else
-		// This should never happen - isMCPWM should only be true on ESP32S3
-		ESP_LOGE(TAG, "ERROR: MCPWM getChannel attempted on non-ESP32S3 target!");
+		// This should never happen - isMCPWM should only be true on ESP32S3 or ESP32C5
+		ESP_LOGE(TAG, "ERROR: MCPWM getChannel attempted on non-ESP32S3 and non-ESP32C5 target!");
 		isMCPWM = false; // Reset to safe state
 		return -1; // Return invalid channel as fallback
 #endif
@@ -262,7 +264,7 @@ double ESP32PWM::setup(double freq, uint8_t resolution_bits) {
 	resolutionBits = resolution_bits;
 	if (attached()) {
 		if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 			// for MCPWM, re-init timer with new freq
 			mcpwm_config_t pwm_config;
 			pwm_config.frequency = freq;
@@ -292,7 +294,7 @@ double ESP32PWM::setup(double freq, uint8_t resolution_bits) {
 		return freq;
 	}
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		mcpwm_config_t pwm_config;
 		pwm_config.frequency = freq;
 		pwm_config.cmpr_a = 0;
@@ -326,12 +328,12 @@ void ESP32PWM::writeScaled(double duty) {
 void ESP32PWM::write(uint32_t duty) {
 	myDuty = duty;
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		float duty_percent = (float)duty / (1 << resolutionBits) * 100.0f;
 		mcpwm_set_duty(mcpwmUnit, mcpwmTimer, mcpwmOperator, duty_percent);
 #else
-		// This should never happen - isMCPWM should only be true on ESP32S3
-		ESP_LOGE(TAG, "ERROR: MCPWM operation attempted on non-ESP32S3 target!");
+		// This should never happen - isMCPWM should only be true on ESP32S3 or ESP32C5
+		ESP_LOGE(TAG, "ERROR: MCPWM operation attempted on non-ESP32S3 and non-ESP32C5 target!");
 		isMCPWM = false; // Reset to safe state
 #endif
 	} else {
@@ -386,7 +388,7 @@ void ESP32PWM::adjustFrequency(double freq, double dutyScaled) {
 		dutyScaled=getDutyScaled();
 	writeScaled(dutyScaled);
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		mcpwmTimers[mcpwmUnit][mcpwmTimer].freq = (long)freq;
 		myFreq = freq;
 		// re-init timer with new freq
@@ -452,12 +454,12 @@ double ESP32PWM::writeNote(note_t note, uint8_t octave) {
 }
 uint32_t ESP32PWM::read() {
 	if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 		// MCPWM doesn't have a read function, return stored duty
 		return myDuty;
 #else
-		// This should never happen - isMCPWM should only be true on ESP32S3
-		ESP_LOGE(TAG, "ERROR: MCPWM read attempted on non-ESP32S3 target!");
+		// This should never happen - isMCPWM should only be true on ESP32S3 or ESP32C5
+		ESP_LOGE(TAG, "ERROR: MCPWM read attempted on non-ESP32S3 and non-ESP32C5 target!");
 		isMCPWM = false; // Reset to safe state
 		return myDuty; // Return stored duty as fallback
 #endif
@@ -486,7 +488,7 @@ void ESP32PWM::attachPin(uint8_t pin) {
 		attach(pin);
 		bool success = true;
 		if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 			mcpwm_io_signals_t signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM0A : MCPWM0B;
 			if (mcpwmUnit == MCPWM_UNIT_1) signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM1A : MCPWM1B;
 			mcpwm_gpio_init(mcpwmUnit, signal, pin);
@@ -510,6 +512,8 @@ void ESP32PWM::attachPin(uint8_t pin) {
 #if defined(CONFIG_IDF_TARGET_ESP32S2)
 	ESP_LOGE(TAG, "ERROR PWM channel unavailable on pin requested! %d PWM available on: 1-21,26,33-42", pin);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+	ESP_LOGE(TAG, "ERROR PWM channel unavailable on pin requested! %d PWM available on: 1-21,35-45,47-48", pin);
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
 	ESP_LOGE(TAG, "ERROR PWM channel unavailable on pin requested! %d PWM available on: 1-21,35-45,47-48", pin);
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 	ESP_LOGE(TAG, "ERROR PWM channel unavailable on pin requested! %d PWM available on: 1-10,18-21", pin);
@@ -596,7 +600,7 @@ ESP32PWM* pwmFactory(int pin) {
 			if (ESP32PWM::ChannelUsed[i]->getPin() == pin)
 				return ESP32PWM::ChannelUsed[i];
 		}
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 	for(int u=0; u<MCPWM_NUM_UNITS; u++) {
 		for(int t=0; t<MCPWM_NUM_TIMERS_PER_UNIT; t++) {
 			for(int o=0; o<MCPWM_NUM_OPERATORS_PER_TIMER; o++) {

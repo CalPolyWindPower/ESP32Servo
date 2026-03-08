@@ -103,7 +103,7 @@ int Servo::attach(int pin, int min, int max)
         else
         {
 #ifdef __XTENSA_esp32s3__
-if(
+if( // todo? - Unsure what this does or it needs to be adjusted for ESP32C5 support
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -112,6 +112,10 @@ if(
 			    ESP_LOGE(TAG, "This pin can not be a servo: %d Servo available on: 1-21,35-45,47-48", pin);
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 				ESP_LOGE(TAG, "This pin can not be a servo: %d Servo available on: 1-10,18-21", pin);
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+				ESP_LOGE(TAG, "This pin can not be a servo: %d Servo available on: 1-10,18-21", pin);
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+				ESP_LOGE(TAG, "This pin can not be a servo: %d Servo available on: 0-14,12-14,23-28", pin);
 #else
 				ESP_LOGE(TAG, "This pin can not be a servo: %d Servo available on: 2,4,5,12-19,21-23,25-27,32-33",pin);
 #endif

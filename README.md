@@ -8,7 +8,7 @@ This library provides enhanced PWM control for ESP32 boards, faithfully replicat
 
 ## Key Features
 
-- **ESP32S3 MCPWM Support**: Hardware-accelerated servo control for optimal timing precision
+- **ESP32S3 & ESP32C5 MCPWM Support**: Hardware-accelerated servo control for optimal timing precision
 - **Dual Hardware Architecture**: 20 PWM channels (8 LEDC + 12 MCPWM) with intelligent allocation
 - **Flexible Frequency Modes**: Variable-frequency PWM and fixed-frequency servo control
 - **Automatic Fallback**: Seamless hardware allocation when preferred resources are unavailable
@@ -22,6 +22,7 @@ This library provides enhanced PWM control for ESP32 boards, faithfully replicat
 | ESP32S2       | 8             | -              | 8              |
 | ESP32         | 16            | -              | 16             |
 | ESP32C3       | 6             | -              | 6              |
+| ESP32C3       | 6             | 6              | 12              |
 
 ## Usage Examples
 
@@ -135,3 +136,4 @@ MAXIMUM number of servos: Varies by ESP32 variant
 - ESP32: 16 channels (16 LEDC)
 - ESP32S2: 8 channels (8 LEDC)
 - ESP32C3: 6 channels (6 LEDC)
+- ESP32C5: 12 channels (6 LEDC + 6 MCPWM)

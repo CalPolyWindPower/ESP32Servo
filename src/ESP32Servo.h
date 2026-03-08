@@ -6,13 +6,13 @@
  Original Servo.h written by Michael Margolis in 2009
 
  This library provides servo control with optimized hardware support:
- - ESP32S3: MCPWM hardware acceleration for precise servo timing
+ - ESP32S3 & ESP32C5: MCPWM hardware acceleration for precise servo timing
  - Fixed frequency mode for consistent servo operation
  - Automatic hardware allocation with LEDC fallback
 
  Key Features:
  - Uses fixed-frequency PWM for servo compatibility
- - MCPWM preferred on S3, LEDC fallback for maximum channels
+ - MCPWM preferred on S3 & C5, LEDC fallback for maximum channels
  - 50Hz default frequency with 1000-2000us pulse range
  - Up to 16 servo channels (limited by available PWM hardware)
 
