@@ -103,7 +103,7 @@ int Servo::attach(int pin, int min, int max)
         else
         {
 #ifdef __XTENSA_esp32s3__
-if(
+if( // todo? - Unsure what this does or it needs to be adjusted for ESP32C5 support
 #endif
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2)

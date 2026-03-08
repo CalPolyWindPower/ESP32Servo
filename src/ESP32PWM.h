@@ -2,15 +2,15 @@
  * ESP32PWM.h - Enhanced PWM Library for ESP32
  *
  * This library provides PWM functionality for ESP32 chips with support for:
- * - ESP32S3: MCPWM hardware acceleration for optimal servo performance
+ * - ESP32S3 & ESP32C5: MCPWM hardware acceleration for optimal servo performance
  * - Variable frequency mode: LEDC preferred, MCPWM fallback for flexibility
  * - Fixed frequency mode: MCPWM preferred, LEDC fallback for shared timers
  * - Automatic hardware allocation with intelligent fallbacks
  *
  * Key Features:
- * - Dual hardware support (LEDC + MCPWM on S3)
+ * - Dual hardware support (LEDC + MCPWM on S3 and C5)
  * - 20 total PWM channels on ESP32S3 (8 LEDC + 12 MCPWM)
- * - 12 (6 supported) total PWM channels on ESP32C5 (6 LEDC + 6 MCPWM (not supported by library yet))
+ * - 12 total PWM channels on ESP32C5 (6 LEDC + 6 MCPWM)
  * - Frequency locking for fixed-frequency applications (servos)
  * - Seamless hardware fallback when preferred hardware unavailable
  *
@@ -21,7 +21,7 @@
  *
  * Created on: Sep 22, 2018
  * Author: hephaestus
- * Enhanced for ESP32S3 MCPWM support
+ * Enhanced for ESP32S3 and ESP32C5 MCPWM support
  */
 
 #ifndef LIBRARIES_ESP32SERVO_SRC_ESP32PWM_H_
@@ -38,22 +38,30 @@
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
 /**
  * @brief Number of PWM channels
- * @details The ESP32C5 has 6 LEDC channels and 6 MCPWM channels, but the MCPWM channels require further changes
+ * @details The ESP32C5 has 6 LEDC channels and 6 MCPWM channels
  * @see Page 5 of https://documentation.espressif.com/esp32-c5_datasheet_en.pdf
  */
-// #define NUM_PWM 12 // TODO: Add MCPWM support for the ESP32-C5
-#define NUM_PWM 6 // LEDC channels only
+#define NUM_PWM 12
 #else
 #define NUM_PWM 16
 #endif
 
 // MCPWM support for ESP32S3
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 #include "driver/mcpwm.h"
 #define MCPWM_NUM_UNITS 2
 #define MCPWM_NUM_TIMERS_PER_UNIT 3
-#define MCPWM_NUM_OPERATORS_PER_TIMER 2
 
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#define MCPWM_NUM_OPERATORS_PER_TIMER 2
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+#define MCPWM_NUM_OPERATORS_PER_TIMER 2
+#else
+#error "MCPWM configuration error."
+#endif
+
+
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 class ESP32PWM; // Forward declaration
 
 struct MCPWMTimerInfo {
@@ -82,7 +90,7 @@ private:
 	bool isMCPWM = false;
 	int allocatenext(double freq);
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 	mcpwm_unit_t mcpwmUnit;
 	mcpwm_timer_t mcpwmTimer;
 	mcpwm_operator_t mcpwmOperator;
@@ -155,7 +163,7 @@ public:
 	static ESP32PWM * ChannelUsed[NUM_PWM]; // used to track whether a channel is in service
 	static long timerFreqSet[4];
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
 	static MCPWMTimerInfo mcpwmTimers[MCPWM_NUM_UNITS][MCPWM_NUM_TIMERS_PER_UNIT];
 #endif
 
@@ -199,7 +207,7 @@ public:
 		return false;
 	}
 	static int channelsRemaining() {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#if defined(CONFIG_IDF_TARGET_ESP32S3 || defined(CONFIG_IDF_TARGET_ESP32C5))
 		return NUM_PWM + (MCPWM_NUM_UNITS * MCPWM_NUM_TIMERS_PER_UNIT * MCPWM_NUM_OPERATORS_PER_TIMER) - PWMCount;
 #else
 		return NUM_PWM - PWMCount;
