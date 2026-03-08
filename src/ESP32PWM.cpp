@@ -5,7 +5,7 @@
  *      Author: hephaestus
  */
 
-#include <ESP32PWM.h>
+#include "ESP32PWM.h"
 #include "esp32-hal-ledc.h"
 
 // initialize the class variable ServoCount
@@ -52,7 +52,7 @@ ESP32PWM::ESP32PWM(bool variableFrequency) : useVariableFrequency(variableFreque
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
 		// MCPWMTimerInfo struct is initialized with default values in the struct definition
 		ESP_LOGI(TAG, "ESP32S3 detected - MCPWM support enabled");
-#else if defined(CONFIG_IDF_TARGET_ESP32C5)
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
 		ESP_LOGI(TAG, "ESP32C5 detected - MCPWM support enabled");
 #else
 		ESP_LOGI(TAG, "Non-ESP32S3 or -ESP32C5 target - using LEDC only");
@@ -488,9 +488,14 @@ void ESP32PWM::attachPin(uint8_t pin) {
 		attach(pin);
 		bool success = true;
 		if (isMCPWM) {
-#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C5)
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
 			mcpwm_io_signals_t signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM0A : MCPWM0B;
 			if (mcpwmUnit == MCPWM_UNIT_1) signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM1A : MCPWM1B;
+			mcpwm_gpio_init(mcpwmUnit, signal, pin);
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+			// TODO: MCPWM_UNIT_0 was undefined but MCPWM_UNIT_0 was.
+			mcpwm_io_signals_t signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM0A : MCPWM0B;
+			if (mcpwmUnit == MCPWM_UNIT_0) signal = (mcpwmOperator == MCPWM_OPR_A) ? MCPWM1A : MCPWM1B;
 			mcpwm_gpio_init(mcpwmUnit, signal, pin);
 #endif
 		} else {
