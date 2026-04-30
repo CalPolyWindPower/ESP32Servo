@@ -177,7 +177,6 @@ public:
 				(pin >= 18 && pin <= 21)) //4
 #elif defined(CONFIG_IDF_TARGET_ESP32C5)
 		if ((pin >=0 && pin <= 14) ||
-				(pin >= 12 && pin <= 14) ||
 				(pin >= 23 && pin <= 28))
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
 		if ((pin >=0 && pin <= 9) || //10
